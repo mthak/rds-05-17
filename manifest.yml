@@ -1,0 +1,114 @@
+Version: 1-beta
+ApplicationName: "ShipJenkinsBuildLogsToEs"
+organization: Operations
+aws:
+  master:
+    accountNumber: "689019322137"
+    esDomain: "https://vpc-logcentral-shared-6-0-k643z6sk2eualfpp4ulzkdeqqq.us-east-1.es.amazonaws.com"
+    rdsLogS3Bucket: "aws-jdf-sharedservices-logs"
+    region: "us-east-1"
+    s3Bucket: "aws-jdf-sharedservices-applications"
+  devl:
+    accountNumber: "515947518870"
+    esDomain: "https://vpc-logcentral-devl-6-0-3lu2yg6r6d7oigzvzpltewb3fa.us-east-1.es.amazonaws.com"
+    rdsLogS3Bucket: "aws-jdf-apps-devl-logs"
+    region: "us-east-1"
+    s3Bucket: "aws-jdf-apps-devl-system"
+  prod:
+    accountNumber: "476083617163"
+    esDomain: "https://vpc-logcentral-prod-6-0-d7urjpu4ieth5mciud5x5fl664.us-east-1.es.amazonaws.com"
+    rdsLogS3Bucket: "aws-jdf-apps-prod-logs"
+    region: "us-east-1"
+    s3Bucket: "aws-jdf-apps-prod-system"
+lambda:
+  shipRdsLogsToS3:
+    language: python
+    localDir: lambda/shipRdsLogsToS3
+    stackName: jdf-ops-ship-RDS-logs-to-s3
+    templateName: jdf-ops-ship-RDS-logs-to-s3.yaml
+    zipfile: shipRDSLogsToS3.zip
+    stashName: shipRDSLogsToS3
+  transformRdsLogsToES:
+    language: nodejs
+    localDir: lambda/transformRdsLogsToES
+    stackName: jdf-ops-rds-transform-logs-to-es
+    templateName: jdf-ops-rds-transform-logs-to-es.yaml
+    zipfile: transformRdsLogsToES.zip
+    stashName: transformRdsLogsToES
+environments:
+  devl:
+    DeploymentApprovalRequired: No
+  qual:
+    DeploymentApprovalRequired: Yes
+    Deployment:
+      AutomaticAfterApproval: Yes
+      ADGroup: G79_JDF_CI_ADMIN
+      Message: Do you approve this deployment to proceed?
+      Timeout:
+        unit: DAYS
+        time: 1
+    DeploymentApprovers:
+      TechLead:
+        ApproverTitle: Tech Lead
+        ADGroup: G79_JDF_CI_ADMIN
+        Email: smithtylerj2@johndeere.com
+        Message: Tech Lead, Do you approve this deployment to proceed?
+        Timeout:
+          unit: DAYS
+          time: 1
+  cert:
+    DeploymentApprovalRequired: Yes
+    Deployment:
+      AutomaticAfterApproval: No
+      ADGroup: G79_JDF_CI_ADMIN
+      Email: smithtylerj2@johndeere.com
+      Message: Do you approve this deployment to proceed?
+      Timeout:
+        unit: DAYS
+        time: 1
+    DeploymentApprovers:
+      TestLead:
+        ApproverTitle: Test Lead
+        ADGroup: G79_JDF_CI_ADMIN
+        Email: smithtylerj2@johndeere.com
+        Message: Test Lead, Do you approve this deployment to proceed?
+        Timeout:
+          unit: DAYS
+          time: 1
+  prod:
+    DeploymentApprovalRequired: Yes
+    Deployment:
+      AutomaticAfterApproval: No
+      ADGroup: G79_JDF_CI_ADMIN
+      Message: Do you approve this deployment to proceed?
+      Email: smithtylerj2@johndeere.com
+    Timeout:
+      unit: DAYS
+      time: 1
+    DeploymentApprovers:
+      BusinessContact:
+        ApproverTitle: Business Contact
+        ADGroup: G79_JDF_CI_ADMIN
+        Email: smithtylerj2@johndeere.com
+        Message: Business Contact, Do you approve this deployment to proceed?
+        Timeout:
+          unit: DAYS
+          time: 1
+    shared:
+      DeploymentApprovalRequired: no
+      Deployment:
+        AutomaticAfterApproval: Yes
+        ADGroup: G79_JDF_CI_ADMIN
+        Message: Do you approve this deployment to proceed?
+        Timeout:
+          unit: DAYS
+          time: 1
+      DeploymentApprovers:
+        TechLead:
+          ApproverTitle: Tech Lead
+          ADGroup: G79_JDF_CI_ADMIN
+          Email: smithtylerj2@johndeere.com
+          Message: Tech Lead, Do you approve this deployment to proceed?
+          Timeout:
+            unit: DAYS
+            time: 1
