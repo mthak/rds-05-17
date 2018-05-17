@@ -53,24 +53,23 @@ pipeline {
                     dir("lambda/transformRdsLogsToES") {
                         sh("docker run --rm -v \$PWD:/app -w /app node:6.10 npm install --only=production > npminstall.log")
                     }
-
                     def stages = [:]
                     lambdas.each {
-                        stages.put(it.key, {
+                        stages.put(it.key, 
+		           {
                             echo "Building lambda ${it.key}"
 
                             dir("lambda") {
                                 sh "zip ${it.value.zipfile} -r node_modules"
                                 dir("transformRdsLogsToES/src") {
                                     sh "zip -u ../${it.value.zipfile} -r *.js"
-                                } elseif {
-                                    dir("shipRdsLogsToS3") {
-                                        sh "zip -u ../${it.value.zipfile} -r *.py"
-                                    }
+                                }
+                                dir("shipRdsLogsToS3/src") {
+                                   sh "zip -u ../${it.value.zipfile} -r *.py"
+                                }
                                     stash name: "${it.value.stashName}", includes: "${it.value.zipfile}"
                                 }
-                            }
-                       })
+                            })
                 }
                 parallel stages
             }
