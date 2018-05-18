@@ -60,12 +60,12 @@ pipeline {
                             echo "Building lambda ${it.key}"
 
                             dir("lambda") {
-                                sh "zip ${it.value.zipfile} -r node_modules"
                                 dir("transformRdsLogsToES/src") {
+				    sh "zip ${it.value.zipfile} -r node_modules	
                                     sh "zip -u ../${it.value.zipfile} -r *.js"
                                 } elseif {
                                     dir("shipRdsLogsToS3") {
-                                        sh "zip -u ../${it.value.zipfile} -r *.py"
+                                        sh "zip ${it.value.zipfile} -r *.py"
                                     }
                                     stash name: "${it.value.stashName}", includes: "${it.value.zipfile}"
                                 }
@@ -107,11 +107,13 @@ pipeline {
                     environments.each {
                         parallelSteps.put(it.key, {
                             echo "Running for ${it.key}"
-                            deploys3File(s3Bucket, it.value.zipfile)
-                            ['shipRdsLogsToS3', 'transformRdslogsToES'].each {
-                                def tfParameters = "-var-file=${it.key} -var git_url=${env.GIT_URL}, -var git_commit=${env.commit} -var s3_bucket=${it.value.s3Bucket} -var s3_path=${s3SubFolder}"
-                                terraformPlanAndApply(it.key, "latest", tfParameters)
-                            }
+                            //deploys3File(s3Bucket, it.value.zipfile)
+			    dir("terraform") {	
+                                ['shipRdsLogsToS3', 'transformRdslogsToES/src'].each {
+                                   def tfParameters = "-var-file=${it.key} -var git_url=${env.GIT_URL}, -var git_commit=${env.commit} -var s3_bucket=${it.value.s3Bucket} -var s3_path=${s3SubFolder}"
+                                   terraformPlanAndApply(it.key, "latest", tfParameters)
+                                }
+			    }		
                         })
                     }
                     parallel parallelSteps
@@ -130,7 +132,8 @@ def terraformPlanAndApply(String environment, String terraformVersion, tfParamet
             String terraformDockerCommand = "docker run -v `pwd`:`pwd` -w `pwd` 689019322137.dkr.ecr.us-east-1.amazonaws.com/terraform:${terraformVersion}"
             String terraformOptions = "-no-color"
 
-            dir("terraform") {
+            
+		("terraform") {
                 sh "aws ecr get-login --registry-ids 689019322137 --no-include-email --region us-east-1 > ecr_login && chmod +x ecr_login && ./ecr_login"
                 sh "${terraformDockerCommand} init ${terraformOptions} -input=false"
                 sh "${terraformDockerCommand} workspace select ${environment} ${terraformOptions} || ${terraformDockerCommand} workspace new ${environment} ${terraformOptions}"
