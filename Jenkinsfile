@@ -88,8 +88,9 @@ pipeline {
                                 lambdas.each { lambda ->
                                     echo "Uploading lambda ${lambda.key}"
                                     unstash name: "${lambda.value.stashName}"
-                                    awsS3Upload(environment.value.s3Bucket, s3SubFolder, lambda.value.zipfile, lambda.value.zipfile)
-                                }
+                                    // we dont have this function awsS3Upload(environment.value.s3Bucket, s3SubFolder, lambda.value.zipfile, lambda.value.zipfile)
+                                    sh "aws s3 cp ${lambda.value.zipfile} s3://${environment.value.s3Bucket}/${s3SubFolder}/${lambda.value.zipfile} --sse"
+				}
                             }
                         })
                     }
