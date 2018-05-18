@@ -60,16 +60,16 @@ pipeline {
                             echo "Building lambda ${it.key}"
 
                             dir("lambda") {
-                                sh "zip ${it.value.zipfile} -r node_modules"
-                                dir("transformRdsLogsToES/src") {
+				    
+		                 if (dir("transformRdsLogsToES/src")) {
+			            sh "zip ${it.value.zipfile} -r node_modules"		 
                                     sh "zip -u ../${it.value.zipfile} -r *.js"
-                                } elseif {
-                                    dir("shipRdsLogsToS3") {
+                                    }
+                                    if (dir("shipRdsLogsToS3")) {
                                         sh "zip -u ../${it.value.zipfile} -r *.py"
                                     }
                                     stash name: "${it.value.stashName}", includes: "${it.value.zipfile}"
-                                }
-                            }
+			    }
                        })
                 }
                 parallel stages
